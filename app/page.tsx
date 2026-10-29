@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/login/actions";
@@ -27,6 +28,12 @@ async function CurrentUser() {
   return (
     <div className="flex flex-col gap-6">
       <p>ログイン中：{user.email}</p>
+      <Link
+        href="/exercises/new"
+        className="rounded-xl bg-teal-600 py-4 text-center text-xl font-bold text-white"
+      >
+        ＋ 運動を追加
+      </Link>
       <form action={logout}>
         <button
           type="submit"
