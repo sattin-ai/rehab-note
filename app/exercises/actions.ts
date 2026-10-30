@@ -49,6 +49,30 @@ export async function createExercise(
     return { error: "ログインしなおしてください", message: null, values };
   }
 
+  // 写真は自分のユーザーID名のフォルダに保存する（Storage のルールで本人だけ使える）
+  const photo = formData.get("photo");
+  let photoPath: string | null = null;
+  if (photo instanceof File && photo.size > 0) {
+    if (photo.type !== "image/jpeg") {
+      return {
+        error: "この写真は使えません。別の写真を選んでください",
+        message: null,
+        values,
+      };
+    }
+    photoPath = `${user.id}/${crypto.randomUUID()}.jpg`;
+    const { error: uploadError } = await supabase.storage
+      .from("exercise-photos")
+      .upload(photoPath, photo, { contentType: "image/jpeg" });
+    if (uploadError) {
+      return {
+        error: "写真を保存できませんでした。もう一度ためしてください",
+        message: null,
+        values,
+      };
+    }
+  }
+
   const { error } = await supabase.from("exercises").insert({
     user_id: user.id,
     name: values.name,
@@ -56,9 +80,14 @@ export async function createExercise(
     target_muscles: values.targetMuscles,
     compensation_muscles: values.compensationMuscles,
     duration_minutes: duration,
+    photo_path: photoPath,
   });
 
   if (error) {
+    // 運動を保存できなかったので、先に保存した写真を片づける
+    if (photoPath) {
+      await supabase.storage.from("exercise-photos").remove([photoPath]);
+    }
     return {
       error: "保存できませんでした。もう一度ためしてください",
       message: null,
