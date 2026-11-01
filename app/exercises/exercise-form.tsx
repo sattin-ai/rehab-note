@@ -2,7 +2,12 @@
 
 import { type ChangeEvent, useActionState, useState } from "react";
 import type { ExerciseFormState } from "./actions";
-import { CAPTION_MAX_LENGTH, MAX_PHOTOS, PHOTO_MAX_BYTES } from "./photo-rules";
+import {
+  CAPTION_MAX_LENGTH,
+  MAX_PHOTOS,
+  PHOTO_MAX_BYTES,
+  PHOTO_NUMBERS,
+} from "./photo-rules";
 
 type Props = {
   action: (
@@ -16,8 +21,6 @@ type Photo = {
   previewUrl: string;
   caption: string;
 };
-
-const PHOTO_NUMBERS = ["①", "②", "③", "④", "⑤"];
 
 const initialState: ExerciseFormState = {
   error: null,

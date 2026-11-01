@@ -85,28 +85,33 @@ async function ExerciseList() {
               ? photoUrls.get(topPhotoPath)
               : undefined;
             return (
-              <li key={exercise.id} className="flex flex-col gap-1">
-                <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-zinc-100 text-sm text-zinc-500">
-                  {photoUrl ? (
-                    // ログインが必要な写真なので、Next.js の画像変換は使わない
-                    <Image
-                      src={photoUrl}
-                      alt={exercise.name}
-                      fill
-                      unoptimized
-                      sizes="33vw"
-                      className="object-cover"
-                    />
-                  ) : (
-                    "写真なし"
-                  )}
-                </div>
-                <p className="line-clamp-2 text-base font-bold leading-snug break-words">
-                  {exercise.name}
-                </p>
-                <p className="text-base text-zinc-600">
-                  {exercise.duration_minutes}分
-                </p>
+              <li key={exercise.id}>
+                <Link
+                  href={`/exercises/${exercise.id}`}
+                  className="flex flex-col gap-1"
+                >
+                  <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-zinc-100 text-sm text-zinc-500">
+                    {photoUrl ? (
+                      // ログインが必要な写真なので、Next.js の画像変換は使わない
+                      <Image
+                        src={photoUrl}
+                        alt={exercise.name}
+                        fill
+                        unoptimized
+                        sizes="33vw"
+                        className="object-cover"
+                      />
+                    ) : (
+                      "写真なし"
+                    )}
+                  </div>
+                  <p className="line-clamp-2 text-base font-bold leading-snug break-words">
+                    {exercise.name}
+                  </p>
+                  <p className="text-base text-zinc-600">
+                    {exercise.duration_minutes}分
+                  </p>
+                </Link>
               </li>
             );
           })}
