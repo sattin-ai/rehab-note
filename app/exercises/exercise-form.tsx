@@ -2,6 +2,7 @@
 
 import { type ChangeEvent, useActionState, useState } from "react";
 import type { ExerciseFormState } from "./actions";
+import { CAPTION_MAX_LENGTH, MAX_PHOTOS, PHOTO_MAX_BYTES } from "./photo-rules";
 
 type Props = {
   action: (
@@ -13,7 +14,10 @@ type Props = {
 type Photo = {
   blob: Blob;
   previewUrl: string;
+  caption: string;
 };
+
+const PHOTO_NUMBERS = ["①", "②", "③", "④", "⑤"];
 
 const initialState: ExerciseFormState = {
   error: null,
@@ -26,8 +30,6 @@ const inputClass = "rounded-xl border border-zinc-300 px-4 py-3 text-xl";
 // 写真は長い辺を 1200px までにして JPEG で軽くする
 const PHOTO_MAX_SIDE = 1200;
 const PHOTO_QUALITY = 0.8;
-// Next.js がサーバーへ送れるのは 1MB までなので、少し余裕をもたせる
-const PHOTO_MAX_BYTES = 900 * 1024;
 
 async function compressImage(file: File): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
@@ -57,7 +59,10 @@ async function compressImage(file: File): Promise<Blob> {
 // 追加画面と編集画面で使い回す入力フォーム
 export function ExerciseForm({ action }: Props) {
   const [state, formAction, pending] = useActionState(action, initialState);
-  const [photo, setPhoto] = useState<Photo | null>(null);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  // トップの写真が何番目か（0 が①）
+  const [topIndex, setTopIndex] = useState(0);
+  const [preparingPhotos, setPreparingPhotos] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [lastState, setLastState] = useState(state);
   const values = state.values;
@@ -66,62 +71,154 @@ export function ExerciseForm({ action }: Props) {
   if (state !== lastState) {
     setLastState(state);
     if (state.message) {
-      setPhoto(null);
+      photos.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
+      setPhotos([]);
+      setTopIndex(0);
     }
   }
 
+  // 選んだ写真を1枚ずつ軽くして、うしろに足していく
   async function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
     const input = event.currentTarget;
-    const file = input.files?.[0];
+    const files = Array.from(input.files ?? []);
+    // 同じ写真をもう一度選べるように、選択を空に戻す
+    input.value = "";
     setPhotoError(null);
-    if (photo) {
-      URL.revokeObjectURL(photo.previewUrl);
-    }
-    if (!file) {
-      setPhoto(null);
+    if (files.length === 0) {
       return;
     }
 
-    try {
-      const blob = await compressImage(file);
-      if (blob.size > PHOTO_MAX_BYTES) {
-        throw new Error("photo is too large");
+    const room = MAX_PHOTOS - photos.length;
+    setPreparingPhotos(true);
+    const added: Photo[] = [];
+    let failed = false;
+    for (const file of files.slice(0, room)) {
+      try {
+        const blob = await compressImage(file);
+        if (blob.size > PHOTO_MAX_BYTES) {
+          throw new Error("photo is too large");
+        }
+        added.push({ blob, previewUrl: URL.createObjectURL(blob), caption: "" });
+      } catch {
+        failed = true;
       }
-      setPhoto({ blob, previewUrl: URL.createObjectURL(blob) });
-    } catch {
-      setPhoto(null);
-      setPhotoError("この写真は使えません。別の写真を選んでください");
-      input.value = "";
+    }
+    setPhotos((current) => [...current, ...added]);
+    setPreparingPhotos(false);
+
+    if (files.length > room) {
+      setPhotoError(`写真は${MAX_PHOTOS}枚までです`);
+    } else if (failed) {
+      setPhotoError("使えない写真がありました。別の写真を選んでください");
     }
   }
 
-  // 元の重い写真ではなく、軽くした写真だけを送る
-  function submit(formData: FormData) {
-    if (photo) {
-      formData.set("photo", photo.blob, "photo.jpg");
+  function changeCaption(index: number, caption: string) {
+    setPhotos((current) =>
+      current.map((photo, i) => (i === index ? { ...photo, caption } : photo)),
+    );
+  }
+
+  function removePhoto(index: number) {
+    URL.revokeObjectURL(photos[index].previewUrl);
+    setPhotos((current) => current.filter((_, i) => i !== index));
+    setPhotoError(null);
+    // トップの写真をやめたら①に戻す。前の写真をやめたら、同じ写真がトップのままになるよう詰める
+    if (index === topIndex) {
+      setTopIndex(0);
+    } else if (index < topIndex) {
+      setTopIndex(topIndex - 1);
     }
+  }
+
+  // 元の重い写真ではなく、軽くした写真と説明を ①②③… の順番で送る
+  function submit(formData: FormData) {
+    photos.forEach((photo) => {
+      formData.append("photos", photo.blob, "photo.jpg");
+      formData.append("captions", photo.caption);
+    });
+    formData.set("topIndex", String(topIndex));
     formAction(formData);
   }
 
   return (
     <form action={submit} className="flex flex-col gap-6">
-      <label className="flex flex-col gap-2">
-        <span>写真（1枚）</span>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handlePhotoChange}
-          className="text-base"
-        />
-      </label>
-      {photo && (
-        // eslint-disable-next-line @next/next/no-img-element -- ブラウザ内の一時的なプレビューなので next/image は使わない
-        <img
-          src={photo.previewUrl}
-          alt="選んだ写真"
-          className="aspect-square w-40 rounded-2xl object-cover"
-        />
-      )}
+      <div className="flex flex-col gap-3">
+        <span>写真（{MAX_PHOTOS}枚まで・なしでもOK）</span>
+        {photos.length > 0 && (
+          <ol className="flex flex-col gap-4">
+            {photos.map((photo, index) => (
+              <li
+                key={photo.previewUrl}
+                className="flex flex-col gap-3 rounded-2xl border border-zinc-300 p-3"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl font-bold">
+                    {PHOTO_NUMBERS[index]}
+                  </span>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- ブラウザ内の一時的なプレビューなので next/image は使わない */}
+                  <img
+                    src={photo.previewUrl}
+                    alt={`選んだ写真${PHOTO_NUMBERS[index]}`}
+                    className="aspect-square w-28 rounded-xl object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(index)}
+                    className="ml-auto px-2 py-1 text-base text-red-600 underline"
+                  >
+                    この写真をやめる
+                  </button>
+                </div>
+                <label className="flex flex-col gap-1">
+                  <span className="text-base">
+                    説明（{CAPTION_MAX_LENGTH}文字まで・なしでもOK）
+                  </span>
+                  <input
+                    type="text"
+                    value={photo.caption}
+                    maxLength={CAPTION_MAX_LENGTH}
+                    onChange={(event) =>
+                      changeCaption(index, event.currentTarget.value)
+                    }
+                    className={inputClass}
+                  />
+                </label>
+                {photos.length >= 2 && (
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="topPhoto"
+                      checked={index === topIndex}
+                      onChange={() => setTopIndex(index)}
+                      className="size-6"
+                    />
+                    <span>一覧に出すトップの写真にする</span>
+                  </label>
+                )}
+              </li>
+            ))}
+          </ol>
+        )}
+        {preparingPhotos ? (
+          <p role="status">写真を準備中…</p>
+        ) : (
+          photos.length < MAX_PHOTOS && (
+            <label className="flex flex-col gap-2">
+              <span className="text-base">
+                写真を選ぶ（あと{MAX_PHOTOS - photos.length}枚）
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePhotoChange}
+                className="text-base"
+              />
+            </label>
+          )
+        )}
+      </div>
       {photoError && (
         <p role="alert" className="text-red-600">
           {photoError}
@@ -190,7 +287,7 @@ export function ExerciseForm({ action }: Props) {
       )}
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || preparingPhotos}
         className="rounded-xl bg-teal-600 py-4 text-xl font-bold text-white disabled:opacity-60"
       >
         {pending ? "保存中…" : "保存"}

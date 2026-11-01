@@ -9,7 +9,8 @@ type ExerciseTile = {
   id: string;
   name: string;
   duration_minutes: number;
-  photo_path: string | null;
+  // トップの写真だけを受け取る（写真がなければ空）
+  exercise_photos: { path: string }[];
 };
 
 // 写真を見られる期限つきURLの有効時間（秒）
@@ -45,13 +46,14 @@ async function ExerciseList() {
   // 登録した順（古いものが先）に並べる
   const { data: exercises, error } = await supabase
     .from("exercises")
-    .select("id, name, duration_minutes, photo_path")
+    .select("id, name, duration_minutes, exercise_photos(path)")
+    .eq("exercise_photos.is_top", true)
     .order("created_at", { ascending: true })
     .returns<ExerciseTile[]>();
 
   // 写真は非公開なので、本人用の期限つきURLをまとめて発行する
   const photoPaths = (exercises ?? []).flatMap((exercise) =>
-    exercise.photo_path ? [exercise.photo_path] : [],
+    exercise.exercise_photos.map((photo) => photo.path),
   );
   const photoUrls = new Map<string, string>();
   if (photoPaths.length > 0) {
@@ -78,8 +80,9 @@ async function ExerciseList() {
       ) : (
         <ul className="grid grid-cols-3 gap-3">
           {exercises.map((exercise) => {
-            const photoUrl = exercise.photo_path
-              ? photoUrls.get(exercise.photo_path)
+            const topPhotoPath = exercise.exercise_photos[0]?.path;
+            const photoUrl = topPhotoPath
+              ? photoUrls.get(topPhotoPath)
               : undefined;
             return (
               <li key={exercise.id} className="flex flex-col gap-1">
