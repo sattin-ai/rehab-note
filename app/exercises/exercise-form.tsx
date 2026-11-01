@@ -1,7 +1,7 @@
 "use client";
 
 import { type ChangeEvent, useActionState, useState } from "react";
-import type { ExerciseFormState } from "./actions";
+import type { ExerciseFormState, ExerciseValues } from "./actions";
 import {
   CAPTION_MAX_LENGTH,
   MAX_PHOTOS,
@@ -14,6 +14,15 @@ type Props = {
     prevState: ExerciseFormState,
     formData: FormData,
   ) => Promise<ExerciseFormState>;
+  // 編集のとき：今の内容
+  defaultValues?: ExerciseValues;
+  // 編集のとき：今の写真（見せるだけで、まだ変えられない）
+  existingPhotos?: ExistingPhoto[];
+};
+
+export type ExistingPhoto = {
+  url: string | undefined;
+  caption: string;
 };
 
 type Photo = {
@@ -60,7 +69,7 @@ async function compressImage(file: File): Promise<Blob> {
 }
 
 // 追加画面と編集画面で使い回す入力フォーム
-export function ExerciseForm({ action }: Props) {
+export function ExerciseForm({ action, defaultValues, existingPhotos }: Props) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const [photos, setPhotos] = useState<Photo[]>([]);
   // トップの写真が何番目か（0 が①）
@@ -68,7 +77,8 @@ export function ExerciseForm({ action }: Props) {
   const [preparingPhotos, setPreparingPhotos] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [lastState, setLastState] = useState(state);
-  const values = state.values;
+  // エラーのときは入力した内容、それ以外は今の内容（追加のときは空）
+  const values = state.values ?? defaultValues;
 
   // 保存できたら、選んだ写真も消して次の入力に備える
   if (state !== lastState) {
@@ -146,82 +156,86 @@ export function ExerciseForm({ action }: Props) {
 
   return (
     <form action={submit} className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3">
-        <span>写真（{MAX_PHOTOS}枚まで・なしでもOK）</span>
-        {photos.length > 0 && (
-          <ol className="flex flex-col gap-4">
-            {photos.map((photo, index) => (
-              <li
-                key={photo.previewUrl}
-                className="flex flex-col gap-3 rounded-2xl border border-zinc-300 p-3"
-              >
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl font-bold">
-                    {PHOTO_NUMBERS[index]}
-                  </span>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- ブラウザ内の一時的なプレビューなので next/image は使わない */}
-                  <img
-                    src={photo.previewUrl}
-                    alt={`選んだ写真${PHOTO_NUMBERS[index]}`}
-                    className="aspect-square w-28 rounded-xl object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(index)}
-                    className="ml-auto px-2 py-1 text-base text-red-600 underline"
-                  >
-                    この写真をやめる
-                  </button>
-                </div>
-                <label className="flex flex-col gap-1">
-                  <span className="text-base">
-                    説明（{CAPTION_MAX_LENGTH}文字まで・なしでもOK）
-                  </span>
-                  <input
-                    type="text"
-                    value={photo.caption}
-                    maxLength={CAPTION_MAX_LENGTH}
-                    onChange={(event) =>
-                      changeCaption(index, event.currentTarget.value)
-                    }
-                    className={inputClass}
-                  />
-                </label>
-                {photos.length >= 2 && (
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="topPhoto"
-                      checked={index === topIndex}
-                      onChange={() => setTopIndex(index)}
-                      className="size-6"
+      {existingPhotos ? (
+        <ExistingPhotoList photos={existingPhotos} />
+      ) : (
+        <div className="flex flex-col gap-3">
+          <span>写真（{MAX_PHOTOS}枚まで・なしでもOK）</span>
+          {photos.length > 0 && (
+            <ol className="flex flex-col gap-4">
+              {photos.map((photo, index) => (
+                <li
+                  key={photo.previewUrl}
+                  className="flex flex-col gap-3 rounded-2xl border border-zinc-300 p-3"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl font-bold">
+                      {PHOTO_NUMBERS[index]}
+                    </span>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- ブラウザ内の一時的なプレビューなので next/image は使わない */}
+                    <img
+                      src={photo.previewUrl}
+                      alt={`選んだ写真${PHOTO_NUMBERS[index]}`}
+                      className="aspect-square w-28 rounded-xl object-cover"
                     />
-                    <span>一覧に出すトップの写真にする</span>
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(index)}
+                      className="ml-auto px-2 py-1 text-base text-red-600 underline"
+                    >
+                      この写真をやめる
+                    </button>
+                  </div>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-base">
+                      説明（{CAPTION_MAX_LENGTH}文字まで・なしでもOK）
+                    </span>
+                    <input
+                      type="text"
+                      value={photo.caption}
+                      maxLength={CAPTION_MAX_LENGTH}
+                      onChange={(event) =>
+                        changeCaption(index, event.currentTarget.value)
+                      }
+                      className={inputClass}
+                    />
                   </label>
-                )}
-              </li>
-            ))}
-          </ol>
-        )}
-        {preparingPhotos ? (
-          <p role="status">写真を準備中…</p>
-        ) : (
-          photos.length < MAX_PHOTOS && (
-            <label className="flex flex-col gap-2">
-              <span className="text-base">
-                写真を選ぶ（あと{MAX_PHOTOS - photos.length}枚）
-              </span>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handlePhotoChange}
-                className="text-base"
-              />
-            </label>
-          )
-        )}
-      </div>
+                  {photos.length >= 2 && (
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="topPhoto"
+                        checked={index === topIndex}
+                        onChange={() => setTopIndex(index)}
+                        className="size-6"
+                      />
+                      <span>一覧に出すトップの写真にする</span>
+                    </label>
+                  )}
+                </li>
+              ))}
+            </ol>
+          )}
+          {preparingPhotos ? (
+            <p role="status">写真を準備中…</p>
+          ) : (
+            photos.length < MAX_PHOTOS && (
+              <label className="flex flex-col gap-2">
+                <span className="text-base">
+                  写真を選ぶ（あと{MAX_PHOTOS - photos.length}枚）
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handlePhotoChange}
+                  className="text-base"
+                />
+              </label>
+            )
+          )}
+        </div>
+      )}
       {photoError && (
         <p role="alert" className="text-red-600">
           {photoError}
@@ -296,5 +310,41 @@ export function ExerciseForm({ action }: Props) {
         {pending ? "保存中…" : "保存"}
       </button>
     </form>
+  );
+}
+
+// 編集のときに今の写真を見せる（変える機能はまだない）
+function ExistingPhotoList({ photos }: { photos: ExistingPhoto[] }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <span>写真</span>
+      {photos.length === 0 ? (
+        <p className="text-zinc-500">写真はありません</p>
+      ) : (
+        <ol className="flex flex-col gap-3">
+          {photos.map((photo, index) => (
+            <li key={index} className="flex items-start gap-3">
+              <span className="text-2xl font-bold">{PHOTO_NUMBERS[index]}</span>
+              {photo.url ? (
+                // eslint-disable-next-line @next/next/no-img-element -- ログインが必要な写真なので next/image は使わない
+                <img
+                  src={photo.url}
+                  alt={`今の写真${PHOTO_NUMBERS[index]}`}
+                  className="aspect-square w-28 rounded-xl object-cover"
+                />
+              ) : (
+                <span className="flex aspect-square w-28 items-center justify-center rounded-xl bg-zinc-100 text-sm text-zinc-500">
+                  読み込めません
+                </span>
+              )}
+              {photo.caption && (
+                <p className="text-base break-words">{photo.caption}</p>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+      <p className="text-base text-zinc-500">写真の変更は、まだできません</p>
+    </div>
   );
 }

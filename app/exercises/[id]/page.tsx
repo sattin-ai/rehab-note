@@ -1,30 +1,12 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getExercise } from "../get-exercise";
 import { PHOTO_NUMBERS } from "../photo-rules";
 
 export const metadata: Metadata = {
   title: "運動の詳しいページ｜リハビリ運動ノート",
 };
-
-type ExerciseDetail = {
-  id: string;
-  name: string;
-  duration_minutes: number;
-  instructions: string | null;
-  target_muscles: string | null;
-  compensation_muscles: string | null;
-  exercise_photos: { path: string; caption: string; position: number }[];
-};
-
-// 写真を見られる期限つきURLの有効時間（秒）
-const PHOTO_URL_EXPIRES_IN = 60 * 60;
-
-// 運動の id は uuid の形。ちがう形なら問い合わせずに「見つかりません」にする
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function BackLink() {
   return (
@@ -51,62 +33,28 @@ export default function ExercisePage({
 }
 
 async function ExerciseContent({ id }: { id: string }) {
-  if (!UUID_PATTERN.test(id)) {
-    notFound();
-  }
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  // 自分以外の運動は、Supabase のルールでデータが返ってこない（＝見つからない）
-  const { data: exercise, error } = await supabase
-    .from("exercises")
-    .select(
-      "id, name, duration_minutes, instructions, target_muscles, compensation_muscles, exercise_photos(path, caption, position)",
-    )
-    .eq("id", id)
-    .order("position", { referencedTable: "exercise_photos" })
-    .maybeSingle<ExerciseDetail>();
-
-  if (error) {
+  const result = await getExercise(id);
+  if (!result) {
     return (
       <p role="alert" className="text-red-600">
         運動を読み込めませんでした。ページを開きなおしてください
       </p>
     );
   }
-  if (!exercise) {
-    notFound();
-  }
-
-  // 写真は非公開なので、本人用の期限つきURLをまとめて発行する
+  const { exercise, photoUrls } = result;
   const photos = exercise.exercise_photos;
-  const photoUrls = new Map<string, string>();
-  if (photos.length > 0) {
-    const { data: signedUrls } = await supabase.storage
-      .from("exercise-photos")
-      .createSignedUrls(
-        photos.map((photo) => photo.path),
-        PHOTO_URL_EXPIRES_IN,
-      );
-    signedUrls?.forEach(({ path, signedUrl }) => {
-      if (path && signedUrl) {
-        photoUrls.set(path, signedUrl);
-      }
-    });
-  }
 
   return (
     <article className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold break-words">{exercise.name}</h1>
         <p className="text-zinc-600">所要時間：{exercise.duration_minutes}分</p>
+        <Link
+          href={`/exercises/${exercise.id}/edit`}
+          className="self-start rounded-xl border-2 border-teal-600 px-6 py-2 font-bold text-teal-700"
+        >
+          編集
+        </Link>
       </header>
 
       {photos.length === 0 ? (

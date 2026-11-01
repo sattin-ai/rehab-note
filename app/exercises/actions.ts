@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CAPTION_MAX_LENGTH, MAX_PHOTOS, PHOTO_MAX_BYTES } from "./photo-rules";
 
@@ -18,29 +20,44 @@ export type ExerciseFormState = {
   values: ExerciseValues | null;
 };
 
-export async function createExercise(
-  _prevState: ExerciseFormState,
-  formData: FormData,
-): Promise<ExerciseFormState> {
-  const values: ExerciseValues = {
+export type DeleteExerciseState = {
+  error: string | null;
+};
+
+function readExerciseValues(formData: FormData): ExerciseValues {
+  return {
     name: String(formData.get("name") ?? "").trim(),
     instructions: String(formData.get("instructions") ?? "").trim(),
     targetMuscles: String(formData.get("targetMuscles") ?? "").trim(),
     compensationMuscles: String(formData.get("compensationMuscles") ?? "").trim(),
     durationMinutes: String(formData.get("durationMinutes") ?? "").trim(),
   };
+}
 
+// 追加と編集で同じチェックをする。問題なければ所要時間（分）を返す
+function validateExerciseValues(
+  values: ExerciseValues,
+): { error: string } | { duration: number } {
   if (!values.name) {
-    return { error: "名前を入力してください", message: null, values };
+    return { error: "名前を入力してください" };
   }
   const duration = Number(values.durationMinutes);
   if (!Number.isInteger(duration) || duration < 1 || duration > 180) {
-    return {
-      error: "所要時間は 1〜180 の数字（分）で入力してください",
-      message: null,
-      values,
-    };
+    return { error: "所要時間は 1〜180 の数字（分）で入力してください" };
   }
+  return { duration };
+}
+
+export async function createExercise(
+  _prevState: ExerciseFormState,
+  formData: FormData,
+): Promise<ExerciseFormState> {
+  const values = readExerciseValues(formData);
+  const checked = validateExerciseValues(values);
+  if ("error" in checked) {
+    return { error: checked.error, message: null, values };
+  }
+  const { duration } = checked;
 
   const supabase = await createClient();
   const {
@@ -159,4 +176,98 @@ export async function createExercise(
   }
 
   return { error: null, message: `「${values.name}」を保存しました`, values: null };
+}
+
+// 文字の項目だけを直す（写真はまだ直せない）
+export async function updateExercise(
+  id: string,
+  _prevState: ExerciseFormState,
+  formData: FormData,
+): Promise<ExerciseFormState> {
+  const values = readExerciseValues(formData);
+  const checked = validateExerciseValues(values);
+  if ("error" in checked) {
+    return { error: checked.error, message: null, values };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "ログインしなおしてください", message: null, values };
+  }
+
+  // 自分以外の運動は、Supabase のルールで1行も変わらない
+  const { data: updated, error } = await supabase
+    .from("exercises")
+    .update({
+      name: values.name,
+      instructions: values.instructions,
+      target_muscles: values.targetMuscles,
+      compensation_muscles: values.compensationMuscles,
+      duration_minutes: checked.duration,
+    })
+    .eq("id", id)
+    .select("id");
+
+  if (error || updated.length === 0) {
+    return {
+      error: "保存できませんでした。もう一度ためしてください",
+      message: null,
+      values,
+    };
+  }
+
+  // 一覧と詳しいページの古い表示を捨ててから、詳しいページへ戻る
+  revalidatePath("/");
+  revalidatePath(`/exercises/${id}`);
+  redirect(`/exercises/${id}`);
+}
+
+// 運動・写真の表の行・Storage の写真ファイルをすべて消す
+export async function deleteExercise(
+  id: string,
+  // 削除ボタン（useActionState）が前の状態を渡してくるので、使わなくても受け取る
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _prevState: DeleteExerciseState,
+): Promise<DeleteExerciseState> {
+  const failed = { error: "削除できませんでした。もう一度ためしてください" };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "ログインしなおしてください" };
+  }
+
+  // 運動を消すと写真の表の行も消えるので、先に写真ファイルの場所を控えておく
+  const { data: photos, error: photosError } = await supabase
+    .from("exercise_photos")
+    .select("path")
+    .eq("exercise_id", id)
+    .returns<{ path: string }[]>();
+  if (photosError) {
+    return failed;
+  }
+
+  // 表を先に消す。写真ファイルが消えずに残っても、だれにも見えないので困らない
+  const { data: deleted, error } = await supabase
+    .from("exercises")
+    .delete()
+    .eq("id", id)
+    .select("id");
+  if (error || deleted.length === 0) {
+    return failed;
+  }
+
+  if (photos.length > 0) {
+    await supabase.storage
+      .from("exercise-photos")
+      .remove(photos.map((photo) => photo.path));
+  }
+
+  revalidatePath("/");
+  redirect("/");
 }
