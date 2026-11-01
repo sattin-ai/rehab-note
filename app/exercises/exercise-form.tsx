@@ -2,6 +2,7 @@
 
 import { type ChangeEvent, useActionState, useState } from "react";
 import type { ExerciseFormState, ExerciseValues } from "./actions";
+import { compressImage } from "./compress-image";
 import {
   CAPTION_MAX_LENGTH,
   MAX_PHOTOS,
@@ -16,13 +17,8 @@ type Props = {
   ) => Promise<ExerciseFormState>;
   // 編集のとき：今の内容
   defaultValues?: ExerciseValues;
-  // 編集のとき：今の写真（見せるだけで、まだ変えられない）
-  existingPhotos?: ExistingPhoto[];
-};
-
-export type ExistingPhoto = {
-  url: string | undefined;
-  caption: string;
+  // 編集のときは false。写真は編集画面の写真の欄で、その場で保存する
+  showPhotoPicker?: boolean;
 };
 
 type Photo = {
@@ -37,39 +33,14 @@ const initialState: ExerciseFormState = {
   values: null,
 };
 
-const inputClass = "rounded-xl border border-zinc-300 px-4 py-3 text-xl";
-
-// 写真は長い辺を 1200px までにして JPEG で軽くする
-const PHOTO_MAX_SIDE = 1200;
-const PHOTO_QUALITY = 0.8;
-
-async function compressImage(file: File): Promise<Blob> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(
-    1,
-    PHOTO_MAX_SIDE / Math.max(bitmap.width, bitmap.height),
-  );
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  const context = canvas.getContext("2d");
-  if (!context) {
-    throw new Error("canvas is not supported");
-  }
-  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error("toBlob failed"))),
-      "image/jpeg",
-      PHOTO_QUALITY,
-    );
-  });
-}
+export const inputClass = "rounded-xl border border-zinc-300 px-4 py-3 text-xl";
 
 // 追加画面と編集画面で使い回す入力フォーム
-export function ExerciseForm({ action, defaultValues, existingPhotos }: Props) {
+export function ExerciseForm({
+  action,
+  defaultValues,
+  showPhotoPicker = true,
+}: Props) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const [photos, setPhotos] = useState<Photo[]>([]);
   // トップの写真が何番目か（0 が①）
@@ -156,9 +127,7 @@ export function ExerciseForm({ action, defaultValues, existingPhotos }: Props) {
 
   return (
     <form action={submit} className="flex flex-col gap-6">
-      {existingPhotos ? (
-        <ExistingPhotoList photos={existingPhotos} />
-      ) : (
+      {showPhotoPicker && (
         <div className="flex flex-col gap-3">
           <span>写真（{MAX_PHOTOS}枚まで・なしでもOK）</span>
           {photos.length > 0 && (
@@ -310,41 +279,5 @@ export function ExerciseForm({ action, defaultValues, existingPhotos }: Props) {
         {pending ? "保存中…" : "保存"}
       </button>
     </form>
-  );
-}
-
-// 編集のときに今の写真を見せる（変える機能はまだない）
-function ExistingPhotoList({ photos }: { photos: ExistingPhoto[] }) {
-  return (
-    <div className="flex flex-col gap-3">
-      <span>写真</span>
-      {photos.length === 0 ? (
-        <p className="text-zinc-500">写真はありません</p>
-      ) : (
-        <ol className="flex flex-col gap-3">
-          {photos.map((photo, index) => (
-            <li key={index} className="flex items-start gap-3">
-              <span className="text-2xl font-bold">{PHOTO_NUMBERS[index]}</span>
-              {photo.url ? (
-                // eslint-disable-next-line @next/next/no-img-element -- ログインが必要な写真なので next/image は使わない
-                <img
-                  src={photo.url}
-                  alt={`今の写真${PHOTO_NUMBERS[index]}`}
-                  className="aspect-square w-28 rounded-xl object-cover"
-                />
-              ) : (
-                <span className="flex aspect-square w-28 items-center justify-center rounded-xl bg-zinc-100 text-sm text-zinc-500">
-                  読み込めません
-                </span>
-              )}
-              {photo.caption && (
-                <p className="text-base break-words">{photo.caption}</p>
-              )}
-            </li>
-          ))}
-        </ol>
-      )}
-      <p className="text-base text-zinc-500">写真の変更は、まだできません</p>
-    </div>
   );
 }

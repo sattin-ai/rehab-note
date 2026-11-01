@@ -9,7 +9,13 @@ export type ExerciseDetail = {
   instructions: string | null;
   target_muscles: string | null;
   compensation_muscles: string | null;
-  exercise_photos: { path: string; caption: string; position: number }[];
+  exercise_photos: {
+    id: string;
+    path: string;
+    caption: string;
+    position: number;
+    is_top: boolean;
+  }[];
 };
 
 // 写真を見られる期限つきURLの有効時間（秒）
@@ -42,7 +48,7 @@ export async function getExercise(id: string): Promise<{
   const { data: exercise, error } = await supabase
     .from("exercises")
     .select(
-      "id, name, duration_minutes, instructions, target_muscles, compensation_muscles, exercise_photos(path, caption, position)",
+      "id, name, duration_minutes, instructions, target_muscles, compensation_muscles, exercise_photos(id, path, caption, position, is_top)",
     )
     .eq("id", id)
     .order("position", { referencedTable: "exercise_photos" })

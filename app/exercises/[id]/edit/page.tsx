@@ -5,6 +5,7 @@ import { deleteExercise, updateExercise } from "../../actions";
 import { ExerciseForm } from "../../exercise-form";
 import { getExercise } from "../../get-exercise";
 import { DeleteButton } from "./delete-button";
+import { PhotoEditor } from "./photo-editor";
 
 export const metadata: Metadata = {
   title: "運動の編集｜リハビリ運動ノート",
@@ -41,20 +42,29 @@ async function EditContent({ id }: { id: string }) {
         ← 詳しいページへ戻る
       </Link>
       <h1 className="text-3xl font-bold">運動の編集</h1>
-      <ExerciseForm
-        action={updateExercise.bind(null, exercise.id)}
-        defaultValues={{
-          name: exercise.name,
-          instructions: exercise.instructions ?? "",
-          targetMuscles: exercise.target_muscles ?? "",
-          compensationMuscles: exercise.compensation_muscles ?? "",
-          durationMinutes: String(exercise.duration_minutes),
-        }}
-        existingPhotos={exercise.exercise_photos.map((photo) => ({
+      <PhotoEditor
+        exerciseId={exercise.id}
+        photos={exercise.exercise_photos.map((photo) => ({
+          id: photo.id,
           url: photoUrls.get(photo.path),
           caption: photo.caption,
+          isTop: photo.is_top,
         }))}
       />
+      <section className="flex flex-col gap-4 border-t border-zinc-300 pt-8">
+        <h2 className="text-2xl font-bold">文字の項目</h2>
+        <ExerciseForm
+          action={updateExercise.bind(null, exercise.id)}
+          defaultValues={{
+            name: exercise.name,
+            instructions: exercise.instructions ?? "",
+            targetMuscles: exercise.target_muscles ?? "",
+            compensationMuscles: exercise.compensation_muscles ?? "",
+            durationMinutes: String(exercise.duration_minutes),
+          }}
+          showPhotoPicker={false}
+        />
+      </section>
       {/* まちがえて押さないように、保存ボタンからはなして置く */}
       <div className="mt-8 border-t border-zinc-300 pt-8">
         <DeleteButton action={deleteExercise.bind(null, exercise.id)} />
