@@ -25,7 +25,7 @@ Freshly scaffolded with `create-next-app`; `app/page.tsx` and `app/layout.tsx` a
 
 ## Product: リハビリ運動ノート (rehab exercise notebook)
 
-Single-user mobile-first app for recording exercises taught by a physical therapist (photo, name, instructions, target muscles, muscles prone to compensation, duration) and picking a "today's set" with a total time.
+Single-user mobile-first app for recording exercises taught by a physical therapist (up to 5 numbered photos with captions, name, instructions, target muscles, muscles prone to compensation, duration) and picking a "today's set" with a total time.
 
 Planned (not yet installed) backend: **Supabase Auth** (email + password) and **Supabase Storage** for photos, deployed on **Vercel** free tier. Data and photos must be visible only to the logged-in owner (use RLS / private storage).
 
