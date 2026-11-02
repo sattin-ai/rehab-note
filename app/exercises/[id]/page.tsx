@@ -8,8 +8,13 @@ export const metadata: Metadata = {
   title: "運動の詳しいページ｜リハビリ運動ノート",
 };
 
-function BackLink() {
-  return (
+// 今日のセットから開いたとき（?from=today）は、今日のセットへ戻る
+function BackLink({ fromToday }: { fromToday: boolean }) {
+  return fromToday ? (
+    <Link href="/today" className="text-teal-700 underline">
+      ← 今日のセットへ戻る
+    </Link>
+  ) : (
     <Link href="/" className="text-teal-700 underline">
       ← 一覧へ戻る
     </Link>
@@ -18,16 +23,26 @@ function BackLink() {
 
 export default function ExercisePage({
   params,
+  searchParams,
 }: PageProps<"/exercises/[id]">) {
+  const fromToday = searchParams.then(({ from }) => from === "today");
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 px-4 py-10 text-lg">
-      <BackLink />
+      <Suspense fallback={<p>&nbsp;</p>}>
+        {fromToday.then((value) => (
+          <BackLink fromToday={value} />
+        ))}
+      </Suspense>
       <Suspense fallback={<p>読み込み中…</p>}>
         {params.then(({ id }) => (
           <ExerciseContent id={id} />
         ))}
       </Suspense>
-      <BackLink />
+      <Suspense fallback={null}>
+        {fromToday.then((value) => (
+          <BackLink fromToday={value} />
+        ))}
+      </Suspense>
     </main>
   );
 }
