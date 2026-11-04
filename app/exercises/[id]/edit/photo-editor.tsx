@@ -100,8 +100,8 @@ export function PhotoEditor({ exerciseId, photos }: Props) {
 
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-2xl font-bold">写真</h2>
-      <p className="text-base text-zinc-600">
+      <h2 className="text-heading font-bold">写真</h2>
+      <p className="text-note text-zinc-600">
         写真の欄は、ボタンを押すとすぐ保存されます（下の「保存」ボタンとは別です）
       </p>
       {error && (
@@ -150,7 +150,7 @@ export function PhotoEditor({ exerciseId, photos }: Props) {
 
       {photos.length < MAX_PHOTOS && (
         <label className="flex flex-col gap-2">
-          <span className="text-base">
+          <span className="text-note">
             写真を足す（あと{MAX_PHOTOS - photos.length}枚）
           </span>
           <input
@@ -159,7 +159,7 @@ export function PhotoEditor({ exerciseId, photos }: Props) {
             multiple
             disabled={busy}
             onChange={handleAdd}
-            className="text-base"
+            className="text-note file:mr-3 file:min-h-12 file:rounded-xl file:border-2 file:border-teal-600 file:bg-transparent file:px-4 file:text-body file:font-bold file:text-teal-700 disabled:opacity-60"
           />
         </label>
       )}
@@ -192,7 +192,7 @@ function PhotoItem({
   return (
     <li className="flex flex-col gap-3 rounded-2xl border border-zinc-300 p-3">
       <div className="flex items-start gap-3">
-        <span className="text-2xl font-bold">{PHOTO_NUMBERS[index]}</span>
+        <span className="text-heading font-bold">{PHOTO_NUMBERS[index]}</span>
         {photo.url ? (
           // eslint-disable-next-line @next/next/no-img-element -- ログインが必要な写真なので next/image は使わない
           <img
@@ -201,7 +201,7 @@ function PhotoItem({
             className="aspect-square w-28 rounded-xl object-cover"
           />
         ) : (
-          <span className="flex aspect-square w-28 items-center justify-center rounded-xl bg-zinc-100 text-sm text-zinc-500">
+          <span className="flex aspect-square w-28 items-center justify-center rounded-xl bg-zinc-100 px-1 text-center text-note text-zinc-500">
             読み込めません
           </span>
         )}
@@ -214,7 +214,7 @@ function PhotoItem({
                 type="button"
                 disabled={busy}
                 onClick={onSetTop}
-                className="rounded-xl border-2 border-teal-600 px-3 py-1 text-base font-bold text-teal-700 disabled:opacity-60"
+                className="rounded-xl border-2 border-teal-600 min-h-12 px-4 text-body font-bold text-teal-700 disabled:opacity-60"
               >
                 トップにする
               </button>
@@ -223,7 +223,7 @@ function PhotoItem({
         </div>
       </div>
       <label className="flex flex-col gap-1">
-        <span className="text-base">
+        <span className="text-note">
           説明（{CAPTION_MAX_LENGTH}文字まで・なしでもOK）
         </span>
         <input
@@ -239,7 +239,7 @@ function PhotoItem({
           type="button"
           disabled={busy || caption === photo.caption}
           onClick={() => onSaveCaption(caption)}
-          className="rounded-xl bg-teal-600 px-4 py-2 text-base font-bold text-white disabled:opacity-60"
+          className="rounded-xl bg-teal-600 min-h-12 px-5 text-body font-bold text-white disabled:opacity-60"
         >
           説明を保存
         </button>
@@ -247,7 +247,7 @@ function PhotoItem({
           type="button"
           disabled={busy}
           onClick={onDelete}
-          className="px-2 py-1 text-base text-red-600 underline disabled:opacity-60"
+          className="min-h-12 px-2 text-body text-red-600 underline disabled:opacity-60"
         >
           この写真を消す
         </button>

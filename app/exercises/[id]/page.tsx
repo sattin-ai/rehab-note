@@ -11,11 +11,11 @@ export const metadata: Metadata = {
 // 今日のセットから開いたとき（?from=today）は、今日のセットへ戻る
 function BackLink({ fromToday }: { fromToday: boolean }) {
   return fromToday ? (
-    <Link href="/today" className="text-teal-700 underline">
+    <Link href="/today" className="inline-flex min-h-12 items-center self-start text-teal-700 underline">
       ← 今日のセットへ戻る
     </Link>
   ) : (
-    <Link href="/" className="text-teal-700 underline">
+    <Link href="/" className="inline-flex min-h-12 items-center self-start text-teal-700 underline">
       ← 一覧へ戻る
     </Link>
   );
@@ -27,7 +27,7 @@ export default function ExercisePage({
 }: PageProps<"/exercises/[id]">) {
   const fromToday = searchParams.then(({ from }) => from === "today");
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 px-4 py-10 text-lg">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 px-4 py-10 text-body">
       <Suspense fallback={<p>&nbsp;</p>}>
         {fromToday.then((value) => (
           <BackLink fromToday={value} />
@@ -62,11 +62,11 @@ async function ExerciseContent({ id }: { id: string }) {
   return (
     <article className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold break-words">{exercise.name}</h1>
+        <h1 className="text-title font-bold break-words">{exercise.name}</h1>
         <p className="text-zinc-600">所要時間：{exercise.duration_minutes}分</p>
         <Link
           href={`/exercises/${exercise.id}/edit`}
-          className="self-start rounded-xl border-2 border-teal-600 px-6 py-2 font-bold text-teal-700"
+          className="inline-flex min-h-12 items-center self-start rounded-xl border-2 border-teal-600 px-8 font-bold text-teal-700"
         >
           編集
         </Link>
@@ -82,7 +82,7 @@ async function ExerciseContent({ id }: { id: string }) {
             const photoUrl = photoUrls.get(photo.path);
             return (
               <li key={photo.path} className="flex flex-col gap-2">
-                <span className="text-2xl font-bold">
+                <span className="text-heading font-bold">
                   {PHOTO_NUMBERS[index]}
                 </span>
                 {/* 写真ごとに縦横の形がちがうので、切らずに元の形のまま画面幅いっぱいに出す */}
@@ -126,7 +126,7 @@ async function ExerciseContent({ id }: { id: string }) {
 function DetailItem({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="flex flex-col gap-1">
-      <dt className="text-xl font-bold">{label}</dt>
+      <dt className="text-heading font-bold">{label}</dt>
       <dd className="whitespace-pre-wrap break-words">
         {value?.trim() ? value : <span className="text-zinc-500">（未入力）</span>}
       </dd>

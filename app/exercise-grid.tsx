@@ -25,8 +25,8 @@ export function ExerciseGrid({ tiles }: { tiles: ExerciseTile[] }) {
         onClick={() => setIsSelecting((value) => !value)}
         className={
           isSelecting
-            ? "rounded-xl bg-teal-600 py-4 text-xl font-bold text-white"
-            : "rounded-xl border-2 border-teal-600 py-4 text-xl font-bold text-teal-700"
+            ? "rounded-xl bg-teal-600 min-h-14 py-3 text-body font-bold text-white"
+            : "rounded-xl border-2 border-teal-600 min-h-14 py-3 text-body font-bold text-teal-700"
         }
       >
         {isSelecting ? "選び終わる" : "今日のセットを選ぶ"}
@@ -55,10 +55,10 @@ export function ExerciseGrid({ tiles }: { tiles: ExerciseTile[] }) {
                   </span>
                 )}
               </div>
-              <p className="line-clamp-2 text-base font-bold leading-snug break-words">
+              <p className="line-clamp-2 text-note font-bold leading-snug break-words">
                 {tile.name}
               </p>
-              <p className="text-base text-zinc-600">
+              <p className="text-note text-zinc-600">
                 {tile.duration_minutes}分
               </p>
             </>
@@ -95,7 +95,7 @@ export function ExerciseGrid({ tiles }: { tiles: ExerciseTile[] }) {
         <div className="sticky bottom-4">
           <Link
             href="/today"
-            className="block rounded-xl bg-teal-600 py-4 text-center text-xl font-bold text-white shadow-lg"
+            className="block rounded-xl bg-teal-600 min-h-14 py-3 text-center text-body font-bold text-white shadow-lg"
           >
             今日のセットを見る（合計{totalMinutes}分）
           </Link>

@@ -21,7 +21,7 @@ export function TodayList({ tiles }: { tiles: ExerciseTile[] }) {
         <p>まだ選ばれていません。</p>
         <Link
           href="/"
-          className="rounded-xl border-2 border-teal-600 py-4 text-center text-xl font-bold text-teal-700"
+          className="rounded-xl border-2 border-teal-600 min-h-14 py-3 text-center text-body font-bold text-teal-700"
         >
           一覧で今日のセットを選ぶ
         </Link>
@@ -32,9 +32,9 @@ export function TodayList({ tiles }: { tiles: ExerciseTile[] }) {
   return (
     <div className="flex flex-col gap-8">
       <p className="flex items-baseline gap-3">
-        <span className="text-2xl font-bold">合計</span>
+        <span className="text-heading font-bold">合計</span>
         <span className="text-6xl font-bold text-teal-700">{totalMinutes}</span>
-        <span className="text-2xl font-bold">分</span>
+        <span className="text-heading font-bold">分</span>
         <span className="ml-auto text-zinc-600">{selectedTiles.length}こ</span>
       </p>
       <ul className="flex flex-col gap-4">
@@ -52,7 +52,7 @@ export function TodayList({ tiles }: { tiles: ExerciseTile[] }) {
                 />
               </div>
               <div className="flex min-w-0 flex-col gap-1">
-                <p className="text-xl font-bold break-words">{tile.name}</p>
+                <p className="text-heading font-bold break-words">{tile.name}</p>
                 <p className="text-zinc-600">{tile.duration_minutes}分</p>
               </div>
             </Link>

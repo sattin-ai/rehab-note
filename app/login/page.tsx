@@ -7,8 +7,8 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-8 px-6 py-12 text-lg">
-      <h1 className="text-center text-3xl font-bold">リハビリ運動ノート</h1>
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-8 px-4 py-10 text-body">
+      <h1 className="text-center text-title font-bold">リハビリ運動ノート</h1>
       <LoginForm />
     </main>
   );

@@ -15,7 +15,7 @@ export default function EditExercisePage({
   params,
 }: PageProps<"/exercises/[id]/edit">) {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 px-6 py-12 text-lg">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 px-4 py-10 text-body">
       <Suspense fallback={<p>読み込み中…</p>}>
         {params.then(({ id }) => (
           <EditContent id={id} />
@@ -38,10 +38,10 @@ async function EditContent({ id }: { id: string }) {
 
   return (
     <>
-      <Link href={`/exercises/${exercise.id}`} className="text-teal-700 underline">
+      <Link href={`/exercises/${exercise.id}`} className="inline-flex min-h-12 items-center self-start text-teal-700 underline">
         ← 詳しいページへ戻る
       </Link>
-      <h1 className="text-3xl font-bold">運動の編集</h1>
+      <h1 className="text-title font-bold">運動の編集</h1>
       <PhotoEditor
         exerciseId={exercise.id}
         photos={exercise.exercise_photos.map((photo) => ({
@@ -52,7 +52,7 @@ async function EditContent({ id }: { id: string }) {
         }))}
       />
       <section className="flex flex-col gap-4 border-t border-zinc-300 pt-8">
-        <h2 className="text-2xl font-bold">文字の項目</h2>
+        <h2 className="text-heading font-bold">文字の項目</h2>
         <ExerciseForm
           action={updateExercise.bind(null, exercise.id)}
           defaultValues={{

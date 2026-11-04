@@ -33,7 +33,7 @@ const initialState: ExerciseFormState = {
   values: null,
 };
 
-export const inputClass = "rounded-xl border border-zinc-300 px-4 py-3 text-xl";
+export const inputClass = "rounded-xl border border-zinc-300 px-4 py-3 text-body";
 
 // 追加画面と編集画面で使い回す入力フォーム
 export function ExerciseForm({
@@ -138,7 +138,7 @@ export function ExerciseForm({
                   className="flex flex-col gap-3 rounded-2xl border border-zinc-300 p-3"
                 >
                   <div className="flex items-start gap-3">
-                    <span className="text-2xl font-bold">
+                    <span className="text-heading font-bold">
                       {PHOTO_NUMBERS[index]}
                     </span>
                     {/* eslint-disable-next-line @next/next/no-img-element -- ブラウザ内の一時的なプレビューなので next/image は使わない */}
@@ -150,13 +150,13 @@ export function ExerciseForm({
                     <button
                       type="button"
                       onClick={() => removePhoto(index)}
-                      className="ml-auto px-2 py-1 text-base text-red-600 underline"
+                      className="ml-auto min-h-12 px-2 text-body text-red-600 underline"
                     >
                       この写真をやめる
                     </button>
                   </div>
                   <label className="flex flex-col gap-1">
-                    <span className="text-base">
+                    <span className="text-note">
                       説明（{CAPTION_MAX_LENGTH}文字まで・なしでもOK）
                     </span>
                     <input
@@ -170,13 +170,13 @@ export function ExerciseForm({
                     />
                   </label>
                   {photos.length >= 2 && (
-                    <label className="flex items-center gap-2">
+                    <label className="flex min-h-12 items-center gap-3">
                       <input
                         type="radio"
                         name="topPhoto"
                         checked={index === topIndex}
                         onChange={() => setTopIndex(index)}
-                        className="size-6"
+                        className="size-7 shrink-0"
                       />
                       <span>一覧に出すトップの写真にする</span>
                     </label>
@@ -190,7 +190,7 @@ export function ExerciseForm({
           ) : (
             photos.length < MAX_PHOTOS && (
               <label className="flex flex-col gap-2">
-                <span className="text-base">
+                <span className="text-note">
                   写真を選ぶ（あと{MAX_PHOTOS - photos.length}枚）
                 </span>
                 <input
@@ -198,7 +198,7 @@ export function ExerciseForm({
                   accept="image/*"
                   multiple
                   onChange={handlePhotoChange}
-                  className="text-base"
+                  className="text-note file:mr-3 file:min-h-12 file:rounded-xl file:border-2 file:border-teal-600 file:bg-transparent file:px-4 file:text-body file:font-bold file:text-teal-700 disabled:opacity-60"
                 />
               </label>
             )
@@ -274,7 +274,7 @@ export function ExerciseForm({
       <button
         type="submit"
         disabled={pending || preparingPhotos}
-        className="rounded-xl bg-teal-600 py-4 text-xl font-bold text-white disabled:opacity-60"
+        className="rounded-xl bg-teal-600 min-h-14 py-3 text-body font-bold text-white disabled:opacity-60"
       >
         {pending ? "保存中…" : "保存"}
       </button>

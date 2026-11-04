@@ -12,6 +12,26 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/*
+  文字の大きさのルール（全画面で共通）。
+  ここを直すと、全画面がそろって変わる。
+  text-title / text-heading / text-body / text-note というクラスで使う。
+*/
+@theme {
+  /* 画面のいちばん上の見出し */
+  --text-title: 2rem;
+  --text-title--line-height: 1.35;
+  /* 小見出し・写真の①② */
+  --text-heading: 1.625rem;
+  --text-heading--line-height: 1.4;
+  /* 本文・入力欄・ボタン・戻るリンク */
+  --text-body: 1.25rem;
+  --text-body--line-height: 1.7;
+  /* 説明文・タイルの名前など（これより小さい文字は使わない） */
+  --text-note: 1.125rem;
+  --text-note--line-height: 1.6;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;

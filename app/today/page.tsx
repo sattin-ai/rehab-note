@@ -10,11 +10,11 @@ export const metadata: Metadata = {
 
 export default function TodayPage() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 px-4 py-10 text-lg">
-      <Link href="/" className="text-teal-700 underline">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 px-4 py-10 text-body">
+      <Link href="/" className="inline-flex min-h-12 items-center self-start text-teal-700 underline">
         ← 一覧へ戻る
       </Link>
-      <h1 className="text-3xl font-bold">今日のセット</h1>
+      <h1 className="text-title font-bold">今日のセット</h1>
       <Suspense fallback={<p>読み込み中…</p>}>
         <TodayContent />
       </Suspense>

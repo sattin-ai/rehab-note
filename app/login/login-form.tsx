@@ -17,7 +17,7 @@ export function LoginForm() {
           name="email"
           required
           autoComplete="email"
-          className="rounded-xl border border-zinc-300 px-4 py-3 text-xl"
+          className="rounded-xl border border-zinc-300 px-4 py-3 text-body"
         />
       </label>
       <label className="flex flex-col gap-2">
@@ -27,7 +27,7 @@ export function LoginForm() {
           name="password"
           required
           autoComplete="current-password"
-          className="rounded-xl border border-zinc-300 px-4 py-3 text-xl"
+          className="rounded-xl border border-zinc-300 px-4 py-3 text-body"
         />
       </label>
       {state.error && (
@@ -38,7 +38,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-xl bg-teal-600 py-4 text-xl font-bold text-white disabled:opacity-60"
+        className="rounded-xl bg-teal-600 min-h-14 py-3 text-body font-bold text-white disabled:opacity-60"
       >
         {pending ? "ログイン中…" : "ログイン"}
       </button>

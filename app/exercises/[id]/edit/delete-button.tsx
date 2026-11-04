@@ -30,7 +30,7 @@ export function DeleteButton({ action }: Props) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-xl border-2 border-red-600 py-4 text-xl font-bold text-red-600 disabled:opacity-60"
+        className="rounded-xl border-2 border-red-600 min-h-14 py-3 text-body font-bold text-red-600 disabled:opacity-60"
       >
         {pending ? "削除中…" : "この運動を削除"}
       </button>

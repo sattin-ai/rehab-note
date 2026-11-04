@@ -48,3 +48,4 @@ Key constraints from the spec:
 - 1機能ずつ実装し、そのたびに本番（Vercel）で動作確認する
 - 説明は日本語で、初心者にもわかるようにかんたんに書く
 - 要件は requirements.md を正とする。書かれていない機能は追加しない
+- コミットと push は、私が localhost で確認して OK を出してから行う

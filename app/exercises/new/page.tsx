@@ -9,11 +9,11 @@ export const metadata: Metadata = {
 
 export default function NewExercisePage() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 px-6 py-12 text-lg">
-      <Link href="/" className="text-teal-700 underline">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 px-4 py-10 text-body">
+      <Link href="/" className="inline-flex min-h-12 items-center self-start text-teal-700 underline">
         ← トップへ戻る
       </Link>
-      <h1 className="text-3xl font-bold">運動の追加</h1>
+      <h1 className="text-title font-bold">運動の追加</h1>
       <ExerciseForm action={createExercise} />
     </main>
   );

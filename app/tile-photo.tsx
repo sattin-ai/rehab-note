@@ -11,7 +11,7 @@ export function TilePhoto({
   sizes: string;
 }) {
   return (
-    <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-zinc-100 text-sm text-zinc-500">
+    <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-zinc-100 text-note text-zinc-500">
       {photoUrl ? (
         // ログインが必要な写真なので、Next.js の画像変換は使わない
         <Image
